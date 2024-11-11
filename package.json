@@ -1,0 +1,33 @@
+{
+  "name": "aviatorbot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "test": "node index.js",
+    "start": "node mozzart.js"
+  },
+  "keywords": [
+    "betting",
+    "aviatorbot",
+    "automation",
+    "bettingbot",
+    "bettingautomation"
+  ],
+  "author": "Jack Javi",
+  "license": "ISC",
+  "dependencies": {
+    "@tensorflow/tfjs": "^4.4.0",
+    "arima": "^0.2.5",
+    "chart.js": "^4.2.1",
+    "chartjs-adapter-date-fns": "^3.0.0",
+    "express": "^4.18.2",
+    "mysql": "^2.18.1",
+    "mysql2": "^3.2.1",
+    "process": "^0.11.10",
+    "puppeteer": "^19.8.5",
+    "puppeteer-core": "^22.3.0",
+    "python-shell": "^5.0.0",
+    "socket.io": "^4.6.1"
+  }
+}
