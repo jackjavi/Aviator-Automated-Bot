@@ -122,23 +122,6 @@ const password = process.env.MOZZARTPASSWORD;
     return currentFrame;
   }
 
-  /*
-      try {
-          const betButtonFrame = await waitForSelectorInFrames(page, 'div.buttons-block > button.btn.btn-success.bet.ng-star-inserted', 60000);
-      
-          await betButtonFrame.evaluate(() => {
-            const betButton = document.querySelector('div.buttons-block > button.btn.btn-success.bet.ng-star-inserted');
-            if (betButton) {
-              betButton.click();
-            }
-          });
-      
-          console.log('Clicked the bet button.');
-        } catch (error) {
-          console.error('Error while trying to click the bet button:', error.message);
-        }
-  */
-
   let previousAppBubbleValue = null;
   let isBetting = false;
 
