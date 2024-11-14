@@ -1,8 +1,10 @@
 const puppeteer = require("puppeteer");
+const dotenv = require("dotenv");
+dotenv.config();
 
 const url = "https://www.mozzartbet.co.ke/en#/";
-const username = "";
-const password = "";
+const username = process.env.MOZZARTUSERNAME;
+const password = process.env.MOZZARTPASSWORD;
 
 (async () => {
   const browser = await puppeteer.launch({ headless: false });
@@ -12,10 +14,6 @@ const password = "";
   page.setDefaultNavigationTimeout(60000000);
 
   await page.goto(url);
-
-  // Navigate to the site
-  // Return all the code in the page
-  // const html = await page.content();
 
   // Helper function to wait for a specified duration
   function sleep(ms) {
