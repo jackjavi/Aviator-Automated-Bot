@@ -16,7 +16,7 @@ To get started, clone the repository and install the required dependencies:
 
 1. Clone the repository:
     ```bash
-    git clone https://github.com/Raccoon254/Aviator-Automated-Betika-Bot.git aviator-bot
+    git clone https://github.com/jackjavi/Aviator-Automated-Bot.git
     cd aviator-bot
     ```
 
