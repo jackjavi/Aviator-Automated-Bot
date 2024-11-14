@@ -172,26 +172,69 @@ const password = process.env.MOZZARTPASSWORD;
 
         console.log("Placing a bet...");
 
-        const betButtonFrame = await waitForSelectorInFrames(
-          page,
-          "div.buttons-block > button.btn.btn-success.bet.ng-star-inserted",
-          60000
-        );
+        const betAmount = "7.00"; // Set amount as a string for page.type()
 
-        await betButtonFrame.evaluate(() => {
-          const betButton = document.querySelector(
-            "div.buttons-block > button.btn.btn-success.bet.ng-star-inserted"
+        try {
+          // Wait for the amount input field to be visible
+          await page.waitForSelector("div.input > input.font-weight-bold");
+
+          // Focus on the input field by clicking on it
+          const amountInput = await page.$(
+            "div.input > input.font-weight-bold"
           );
-          if (betButton) {
-            const buttonText = betButton.textContent.trim().toLowerCase();
-            if (buttonText !== "cancel") {
-              betButton.click();
-              console.log("Bet placed successfully!");
-            } else {
-              console.log("Already Betting");
-            }
+          await amountInput.click();
+
+          // Clear the input field by pressing Backspace repeatedly
+          await page.keyboard.down("Control"); // Use Ctrl+A to select all text (works in most environments)
+          await page.keyboard.press("a");
+          await page.keyboard.up("Control");
+          await page.keyboard.press("Backspace"); // Clear the selected text
+
+          // Type the bet amount
+          await page.type("div.input > input.font-weight-bold", betAmount, {
+            delay: 100,
+          });
+          console.log(`Typed the bet amount: ${betAmount}.`);
+
+          // Click the second "plus" button
+          const plusButtons = await page.$$("button.plus.ng-star-inserted");
+          console.log("plusButtons length:", plusButtons.length);
+
+          if (plusButtons && plusButtons.length > 1) {
+            await plusButtons[1].click(); // Clicks the second plus button
+            console.log("Clicked the second plus button.");
+          } else {
+            console.log("Second plus button not found.");
           }
-        });
+
+          // Now target and click the bet button
+          const betButtonFrame = await waitForSelectorInFrames(
+            page,
+            "div.buttons-block > button.btn.btn-success.bet.ng-star-inserted",
+            60000
+          );
+
+          await betButtonFrame.evaluate(() => {
+            const betButton = document.querySelector(
+              "div.buttons-block > button.btn.btn-success.bet.ng-star-inserted"
+            );
+
+            if (betButton) {
+              const buttonText = betButton.textContent.trim().toLowerCase();
+              if (buttonText !== "cancel") {
+                betButton.click();
+                console.log("Bet placed successfully!");
+              } else {
+                console.log("Already Betting");
+              }
+            }
+          });
+        } catch (error) {
+          console.log(
+            "Failed to set the bet amount or place the bet:",
+            error.message
+          );
+        }
 
         console.log("Waiting for round start...");
 
@@ -226,7 +269,7 @@ const password = process.env.MOZZARTPASSWORD;
           if (cashoutButton) {
             console.log("Waiting for cashout time...");
 
-            // Wait for 8 seconds before cashout i.e. 2 seconds before the next round starts
+            // Wait for 8 seconds before cashout
             await delay(8000);
 
             // Cash out
