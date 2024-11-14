@@ -125,8 +125,6 @@ const password = process.env.MOZZARTPASSWORD;
   let previousAppBubbleValue = null;
   let isBetting = false;
 
-  const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
   const logLatestAppBubbleValue = async () => {
     try {
       if (isBetting) return;
@@ -155,7 +153,7 @@ const password = process.env.MOZZARTPASSWORD;
 
         console.log("Placing a bet...");
 
-        const betAmount = "7.00"; // Set amount as a string for page.type()
+        const betAmount = "6.00"; // Set amount as a string for page.type()
 
         try {
           // Wait for the amount input field to be visible
