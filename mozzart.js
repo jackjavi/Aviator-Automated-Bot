@@ -1,8 +1,8 @@
 const puppeteer = require("puppeteer");
 
 const url = "https://www.mozzartbet.co.ke/en#/";
-const username = "0708313804";
-const password = "mvH5zsax@";
+const username = "";
+const password = "";
 
 (async () => {
   const browser = await puppeteer.launch({ headless: false });
@@ -142,10 +142,14 @@ const password = "mvH5zsax@";
   */
 
   let previousAppBubbleValue = null;
-  let shouldBet = false;
+  let isBetting = false;
+
+  const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
   const logLatestAppBubbleValue = async () => {
     try {
+      if (isBetting) return;
+
       const frame = await waitForSelectorInFrames(
         page,
         ".payouts-wrapper .bubble-multiplier"
@@ -164,18 +168,11 @@ const password = "mvH5zsax@";
 
       console.log("Latest data win:", appBubbleValue);
 
-      if (
-        appBubbleValue > 1.1 &&
-        (previousAppBubbleValue === null ||
-          appBubbleValue !== previousAppBubbleValue)
-      ) {
-        shouldBet = true;
-      } else {
-        shouldBet = false;
-      }
+      if (appBubbleValue >= 1.0 && appBubbleValue !== previousAppBubbleValue) {
+        previousAppBubbleValue = appBubbleValue;
+        isBetting = true;
 
-      if (shouldBet) {
-        console.log("sudoMode::>>isBetting.");
+        console.log("Placing a bet...");
 
         const betButtonFrame = await waitForSelectorInFrames(
           page,
@@ -189,50 +186,75 @@ const password = "mvH5zsax@";
           );
           if (betButton) {
             const buttonText = betButton.textContent.trim().toLowerCase();
-            console.log("Button text:", buttonText);
-
             if (buttonText !== "cancel") {
               betButton.click();
-              console.log("isBetting > Clicked!");
+              console.log("Bet placed successfully!");
             } else {
-              console.log("Bet In");
+              console.log("Already Betting");
             }
           }
         });
 
-        // New addition: Wait 4 seconds and then cash out
-        setTimeout(async () => {
-          try {
-            const cashoutButtonFrame = await waitForSelectorInFrames(
-              page,
-              "div.buttons-block > button.btn.btn-warning.cashout.ng-star-inserted"
+        console.log("Waiting for round start...");
+
+        // Wait for round start
+        await page.waitForSelector("div.btn-tooltip.ng-star-inserted", {
+          hidden: true,
+          timeout: 60000,
+        });
+
+        console.log("Round started. Checking status for cashout...");
+
+        // Monitor for cashout or failed bet status
+        while (isBetting) {
+          // Check the visibility of bet and cashout buttons
+          const betButtons = await page.$$(
+            "div.buttons-block > button.btn.btn-success.bet.ng-star-inserted"
+          );
+          const cashoutButton = await page.$(
+            "div.buttons-block > button.btn.btn-warning.cashout.ng-star-inserted"
+          );
+
+          // If more than one bet button is visible, assume a betting failure
+          if (betButtons.length > 1) {
+            console.log(
+              "Multiple bet buttons detected. Bet likely failed. Resetting for next round..."
             );
-
-            await cashoutButtonFrame.evaluate(() => {
-              const cashoutButton = document.querySelector(
-                "div.buttons-block > button.btn.btn-warning.cashout.ng-star-inserted"
-              );
-              if (cashoutButton) {
-                cashoutButton.click();
-                console.log("Cashout > Clicked!");
-              }
-            });
-          } catch (cashoutError) {
-            console.error("Error during cashout:", cashoutError.message);
+            isBetting = false; // Reset isBetting to allow a new bet
+            return; // Exit the function and start over
           }
-        }, 4000); // Wait 4 seconds before cashing out
+
+          // Proceed with cashout if the cashout button is visible
+          if (cashoutButton) {
+            console.log("Waiting for cashout time...");
+
+            // Wait for 8 seconds before cashout i.e. 2 seconds before the next round starts
+            await delay(8000);
+
+            // Cash out
+            try {
+              await cashoutButton.click();
+              console.log("Cashout successful!");
+            } catch (error) {
+              console.error("Error during cashout:", error.message);
+            }
+
+            isBetting = false; // Reset isBetting after cashout
+            return; // Exit after cashout
+          }
+
+          // Delay to avoid excessive CPU usage
+          await delay(500);
+        }
       } else {
-        console.log("Latest > 1.23, isWaiting.");
+        console.log("No betting opportunity at the moment.");
       }
-
-      previousAppBubbleValue = appBubbleValue;
-
-      await page.mainFrame();
     } catch (error) {
       console.error(
         "Error while trying to log latest app bubble value:",
         error.message
       );
+      isBetting = false; // Reset in case of error
     }
   };
 
