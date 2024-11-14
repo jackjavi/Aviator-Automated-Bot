@@ -2,7 +2,7 @@ const puppeteer = require("puppeteer");
 const dotenv = require("dotenv");
 dotenv.config();
 
-const url = "https://www.mozzartbet.co.ke/en#/";
+const url = process.env.MOZZARTURL;
 const username = process.env.MOZZARTUSERNAME;
 const password = process.env.MOZZARTPASSWORD;
 
@@ -16,7 +16,7 @@ const password = process.env.MOZZARTPASSWORD;
   await page.goto(url);
 
   // Helper function to wait for a specified duration
-  function sleep(ms) {
+  function delay(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
@@ -40,7 +40,7 @@ const password = process.env.MOZZARTPASSWORD;
     });
 
     // Adding a delay to ensure the element fully loads
-    await sleep(2000);
+    await delay(2000);
 
     // Try finding and clicking the Aviator link with a more generalized selector
     await page.waitForSelector("a.aviator", { timeout: 5000 });
@@ -58,7 +58,7 @@ const password = process.env.MOZZARTPASSWORD;
     'form.login-form-new input[type="password"][placeholder="Password"]'
   );
 
-  await sleep(2100);
+  await delay(2100);
 
   // Type username and password
   await page.type(
@@ -66,7 +66,7 @@ const password = process.env.MOZZARTPASSWORD;
     username
   );
 
-  await sleep(3100);
+  await delay(3100);
 
   await page.type(
     'form.login-form-new input[type="password"][placeholder="Password"]',
@@ -80,7 +80,7 @@ const password = process.env.MOZZARTPASSWORD;
     console.log("Clicked the login button.");
 
   // Wait for 5 seconds before interacting again
-  await sleep(5000);
+  await delay(5000);
 
   // Click the Aviator link again after login
   try {
