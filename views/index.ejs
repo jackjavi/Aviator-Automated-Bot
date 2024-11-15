@@ -1,4 +1,3 @@
-<!-- views/index.ejs -->
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -7,7 +6,7 @@
   </head>
   <body>
     <h1>Enter Bet Details</h1>
-    <form action="/add-bets" method="POST">
+    <form id="betForm">
       <label for="odds">Odds:</label>
       <input type="text" id="odds" name="odds" required />
       <br /><br />
@@ -16,5 +15,35 @@
       <br /><br />
       <button type="submit">Add Bet</button>
     </form>
+
+    <script>
+      document
+        .getElementById("betForm")
+        .addEventListener("submit", async (event) => {
+          event.preventDefault();
+
+          const formData = new FormData(event.target);
+          const data = {
+            odds: formData.get("odds"),
+            amount: formData.get("amount"),
+          };
+
+          try {
+            const response = await fetch("/add-bets", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(data),
+            });
+
+            if (response.ok) {
+              event.target.reset();
+            } else {
+              alert("Error adding bet.");
+            }
+          } catch (error) {
+            console.error("Error:", error);
+          }
+        });
+    </script>
   </body>
 </html>

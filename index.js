@@ -1,12 +1,12 @@
-// index.js
-const express = require("express");
-const bodyParser = require("body-parser");
-const fs = require("fs");
-const path = require("path");
+import express from "express";
+import bodyParser from "body-parser";
+import fs from "fs";
+import path from "path";
 
 const app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
+app.use(express.json());
 
 // Route to display the input form
 app.get("/", (req, res) => {
@@ -22,7 +22,7 @@ app.post("/add-bets", (req, res) => {
     amount: parseFloat(amount),
   };
 
-  const filePath = path.join(__dirname, "bets.json");
+  const filePath = "bets.json";
 
   // Read and update JSON file
   fs.readFile(filePath, (err, content) => {
