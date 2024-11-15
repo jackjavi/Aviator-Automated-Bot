@@ -3,16 +3,89 @@
   <head>
     <meta charset="UTF-8" />
     <title>Enter Bet Details</title>
+    <style>
+      /* Basic reset and font styling */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: Arial, sans-serif;
+      }
+
+      body {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: #f4f6f8;
+      }
+
+      h1 {
+        text-align: center;
+        color: #333;
+        font-size: 24px;
+        margin-bottom: 20px;
+      }
+
+      /* Form container styling */
+      #betForm {
+        width: 300px;
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      }
+
+      label {
+        color: #333;
+        font-weight: bold;
+        margin-top: 10px;
+        display: inline-block;
+      }
+
+      input[type="text"] {
+        width: 100%;
+        padding: 10px;
+        margin-top: 5px;
+        margin-bottom: 15px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 16px;
+      }
+
+      button[type="submit"] {
+        width: 100%;
+        padding: 10px;
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+      }
+
+      button[type="submit"]:hover {
+        background-color: #0056b3;
+      }
+
+      /* Responsive adjustments */
+      @media (max-width: 400px) {
+        #betForm {
+          width: 100%;
+          padding: 15px;
+        }
+      }
+    </style>
   </head>
   <body>
     <h1>Enter Bet Details</h1>
     <form id="betForm">
       <label for="odds">Odds:</label>
       <input type="text" id="odds" name="odds" required />
-      <br /><br />
       <label for="amount">Amount:</label>
       <input type="text" id="amount" name="amount" required />
-      <br /><br />
       <button type="submit">Add Bet</button>
     </form>
 
