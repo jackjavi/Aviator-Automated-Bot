@@ -1,0 +1,20 @@
+<!-- views/index.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Enter Bet Details</title>
+  </head>
+  <body>
+    <h1>Enter Bet Details</h1>
+    <form action="/add-bets" method="POST">
+      <label for="odds">Odds:</label>
+      <input type="text" id="odds" name="odds" required />
+      <br /><br />
+      <label for="amount">Amount:</label>
+      <input type="text" id="amount" name="amount" required />
+      <br /><br />
+      <button type="submit">Add Bet</button>
+    </form>
+  </body>
+</html>

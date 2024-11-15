@@ -1,10 +1,21 @@
-const puppeteer = require("puppeteer");
-const dotenv = require("dotenv");
+import puppeteer from "puppeteer";
+import fs from "fs";
+import dotenv from "dotenv";
 dotenv.config();
 
 const url = process.env.MOZZARTURL;
 const username = process.env.MOZZARTUSERNAME;
 const password = process.env.MOZZARTPASSWORD;
+
+// Helper to read and update bets file
+async function getNextBet() {
+  const data = JSON.parse(fs.readFileSync("bets.json", "utf8"));
+  const betToProcess = data[0];
+  data.shift();
+  fs.writeFileSync("bets.json", JSON.stringify(data, null, 2));
+
+  return betToProcess;
+}
 
 (async () => {
   const browser = await puppeteer.launch({ headless: false });
@@ -153,7 +164,10 @@ const password = process.env.MOZZARTPASSWORD;
 
         console.log("Placing a bet...");
 
-        const betAmount = "6.00"; // Set amount as a string for page.type()
+        const bet = await getNextBet();
+
+        const betAmount = bet.amount; // Set amount as a string for page.type()
+        const betOdds = bet.odds;
 
         try {
           // Wait for the amount input field to be visible
@@ -172,9 +186,13 @@ const password = process.env.MOZZARTPASSWORD;
           await page.keyboard.press("Backspace"); // Clear the selected text
 
           // Type the bet amount
-          await page.type("div.input > input.font-weight-bold", betAmount, {
-            delay: 100,
-          });
+          await page.type(
+            "div.input > input.font-weight-bold",
+            betAmount.toString(),
+            {
+              delay: 100,
+            }
+          );
           console.log(`Typed the bet amount: ${betAmount}.`);
 
           // Click the second "plus" button
@@ -251,7 +269,7 @@ const password = process.env.MOZZARTPASSWORD;
             console.log("Waiting for cashout time...");
 
             // Wait for 8 seconds before cashout
-            await delay(8000);
+            await delay(betOdds * 4 * 1000);
 
             // Cash out
             try {
