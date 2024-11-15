@@ -206,7 +206,7 @@ async function getNextBet() {
             console.log("Second plus button not found.");
           }
 
-          // Now target and click the bet button
+          // Now target and click the first bet button
           const betButtonFrame = await waitForSelectorInFrames(
             page,
             "div.buttons-block > button.btn.btn-success.bet.ng-star-inserted",
@@ -214,18 +214,25 @@ async function getNextBet() {
           );
 
           await betButtonFrame.evaluate(() => {
-            const betButton = document.querySelector(
+            // Get all matching buttons and select the first one
+            const betButtons = document.querySelectorAll(
               "div.buttons-block > button.btn.btn-success.bet.ng-star-inserted"
             );
 
-            if (betButton) {
-              const buttonText = betButton.textContent.trim().toLowerCase();
+            if (betButtons.length > 0) {
+              const firstBetButton = betButtons[0]; // First button in the list
+              const buttonText = firstBetButton.textContent
+                .trim()
+                .toLowerCase();
+
               if (buttonText !== "cancel") {
-                betButton.click();
-                console.log("Bet placed successfully!");
+                firstBetButton.click();
+                console.log("Bet placed successfully on the first button!");
               } else {
                 console.log("Already Betting");
               }
+            } else {
+              console.log("Bet button not found.");
             }
           });
         } catch (error) {
