@@ -40,6 +40,24 @@ app.post("/add-bets", (req, res) => {
   });
 });
 
+// Endpoint to get the number of bets
+app.get("/bet-count", (req, res) => {
+  const filePath = "bets.json";
+
+  fs.readFile(filePath, "utf8", (err, data) => {
+    if (err && err.code === "ENOENT") {
+      // If file doesn't exist, return count as 0
+      return res.json({ count: 0 });
+    } else if (!err) {
+      // Parse the file and return the number of entries
+      const bets = JSON.parse(data);
+      return res.json({ count: bets.length });
+    } else {
+      res.status(500).send("Error reading bets file.");
+    }
+  });
+});
+
 app.listen(3000, () => {
   console.log("Server started on http://localhost:3000");
 });

@@ -1,11 +1,14 @@
 import puppeteer from "puppeteer";
 import fs from "fs";
+import connectDatabase from "./utils/database.js";
 import dotenv from "dotenv";
 dotenv.config();
 
 const url = process.env.MOZZARTURL;
 const username = process.env.MOZZARTUSERNAME;
 const password = process.env.MOZZARTPASSWORD;
+
+connectDatabase();
 
 // Helper to read and update bets file
 async function getNextBet() {
@@ -41,6 +44,10 @@ async function getNextBet() {
   } catch (error) {
     console.log("Notification prompt not found or already dismissed.");
   }
+
+  // Reload the page
+  await page.reload({ waitUntil: "networkidle2" });
+  console.log("Page reloaded successfully.");
 
   // Click the Aviator game link before login
   // Wait for the broader container to appear

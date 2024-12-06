@@ -81,6 +81,12 @@
   </head>
   <body>
     <h1>Enter Bet Details</h1>
+    <div
+      id="betCount"
+      style="margin-bottom: 20px; font-size: 18px; color: #333"
+    >
+      Total Bets: <span id="betCountValue">Loading...</span>
+    </div>
     <form id="betForm">
       <label for="odds">Odds:</label>
       <input type="text" id="odds" name="odds" required />
@@ -90,6 +96,25 @@
     </form>
 
     <script>
+      const updateBetCount = async () => {
+        try {
+          const response = await fetch("/bet-count");
+          if (response.ok) {
+            const data = await response.json();
+            document.getElementById("betCountValue").textContent = data.count;
+          } else {
+            document.getElementById("betCountValue").textContent = "Error";
+          }
+        } catch (error) {
+          console.error("Error fetching bet count:", error);
+          document.getElementById("betCountValue").textContent = "Error";
+        }
+      };
+
+      // Fetch the bet count initially
+      updateBetCount();
+
+      // Add bet submission event listener
       document
         .getElementById("betForm")
         .addEventListener("submit", async (event) => {
@@ -110,6 +135,7 @@
 
             if (response.ok) {
               event.target.reset();
+              await updateBetCount(); // Update the bet count after adding a new bet
             } else {
               alert("Error adding bet.");
             }
