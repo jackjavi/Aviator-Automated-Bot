@@ -10,14 +10,50 @@ const password = process.env.MOZZARTPASSWORD;
 
 connectDatabase();
 
-// Helper to read and update bets file
-async function getNextBet() {
-  const data = JSON.parse(fs.readFileSync("bets.json", "utf8"));
-  const betToProcess = data[0];
-  data.shift();
-  fs.writeFileSync("bets.json", JSON.stringify(data, null, 2));
+let currentBetIndex = 0;
+let cashoutTriggered = false;
+let betsData = [];
 
+// Load bets data into memory
+function loadBets() {
+  try {
+    const data = fs.readFileSync("bets.json", "utf8");
+    betsData = JSON.parse(data);
+    console.log("Bets data loaded into memory.");
+  } catch (error) {
+    console.error("Error loading bets data:", error.message);
+    process.exit(1); // Exit if file can't be loaded
+  }
+}
+
+// Helper to get the next bet
+async function getNextBet() {
+  if (cashoutTriggered) {
+    // Reset to the first item if cashout has been triggered
+    cashoutTriggered = false;
+    currentBetIndex = 0;
+    console.log("Resetting to the first bet due to cashout.");
+  }
+
+  if (currentBetIndex >= betsData.length) {
+    // Loop back to the start if the end is reached
+    currentBetIndex = 0;
+    console.log("Reached the end of bets, looping back to the start.");
+  }
+
+  const betToProcess = betsData[currentBetIndex];
+  currentBetIndex++;
   return betToProcess;
+}
+
+// Function to handle cashout trigger
+function onCashout() {
+  cashoutTriggered = true;
+}
+
+// Helper function to wait for a specified duration
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 (async () => {
@@ -29,10 +65,8 @@ async function getNextBet() {
 
   await page.goto(url);
 
-  // Helper function to wait for a specified duration
-  function delay(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
+  // Load the bets data into memory once
+  loadBets();
 
   // Click "Cancel" on the notification popup
   try {
@@ -186,11 +220,20 @@ async function getNextBet() {
           );
           await amountInput.click();
 
-          // Clear the input field by pressing Backspace repeatedly
-          await page.keyboard.down("Control"); // Use Ctrl+A to select all text (works in most environments)
-          await page.keyboard.press("a");
-          await page.keyboard.up("Control");
-          await page.keyboard.press("Backspace"); // Clear the selected text
+          // Clear the input field using multiple approaches
+          // Step 1: Use Ctrl+A and Backspace to clear
+          // await page.keyboard.down("Control"); // Use Ctrl+A to select all text
+          // await page.keyboard.press("a");
+          // await page.keyboard.up("Control");
+          // await page.keyboard.press("Backspace"); // Clear the selected text
+
+          // Step 2: Explicitly set the value to an empty string using evaluate
+          await page.evaluate(() => {
+            const inputField = document.querySelector(
+              "div.input > input.font-weight-bold"
+            );
+            if (inputField) inputField.value = ""; // Clear the input value directly
+          });
 
           // Type the bet amount
           await page.type(
@@ -202,15 +245,15 @@ async function getNextBet() {
           );
           console.log(`Typed the bet amount: ${betAmount}.`);
 
-          // Click the second "plus" button
-          const plusButtons = await page.$$("button.plus.ng-star-inserted");
+          // Click the second "minus" button
+          const plusButtons = await page.$$("button.minus.ng-star-inserted");
           console.log("plusButtons length:", plusButtons.length);
 
           if (plusButtons && plusButtons.length > 1) {
-            await plusButtons[1].click(); // Clicks the second plus button
-            console.log("Clicked the second plus button.");
+            await plusButtons[1].click(); // Clicks the second minus button
+            console.log("Clicked the second minus button.");
           } else {
-            console.log("Second plus button not found.");
+            console.log("Second minus button not found.");
           }
 
           // Now target and click the first bet button
@@ -228,11 +271,15 @@ async function getNextBet() {
 
             if (betButtons.length > 0) {
               const firstBetButton = betButtons[0]; // First button in the list
+              const secondBetButton = betButtons[1]; // Second button in the list
               const buttonText = firstBetButton.textContent
                 .trim()
                 .toLowerCase();
+              const secondButtonText = secondBetButton.textContent
+                .trim()
+                .toLowerCase();
 
-              if (buttonText !== "cancel") {
+              if (buttonText !== "cancel" && secondButtonText !== "cancel") {
                 firstBetButton.click();
                 console.log("Bet placed successfully on the first button!");
               } else {
@@ -282,19 +329,67 @@ async function getNextBet() {
           if (cashoutButton) {
             console.log("Waiting for cashout time...");
 
-            // Wait for 8 seconds before cashout
-            await delay(betOdds * 4 * 1000);
+            let maxWaitTime;
 
-            // Cash out
-            try {
-              await cashoutButton.click();
-              console.log("Cashout successful!");
-            } catch (error) {
-              console.error("Error during cashout:", error.message);
+            if (betOdds < 1.5) {
+              maxWaitTime = betOdds * 2.25 * 1000; // Pre-calculated wait time
+            } else if (betOdds >= 1.5 && betOdds < 2.1) {
+              maxWaitTime = betOdds * 3.75 * 1000; // Pre-calculated wait time
+            } else if (betOdds >= 2.1) {
+              maxWaitTime = betOdds * 4.0 * 1000; // Pre-calculated wait time
             }
 
-            isBetting = false; // Reset isBetting after cashout
-            return; // Exit after cashout
+            const checkInterval = 100; // Time interval (in ms) to check button visibility
+            const startTime = Date.now();
+
+            let buttonStillVisible = true;
+
+            while (Date.now() - startTime < maxWaitTime && buttonStillVisible) {
+              try {
+                // Recheck if the cashout button is still visible
+                const cashoutButtonVisible = await page.evaluate(() => {
+                  const cashoutBtn = document.querySelector(
+                    "div.buttons-block > button.btn.btn-warning.cashout.ng-star-inserted"
+                  );
+                  return cashoutBtn !== null; // Return true if button is visible
+                });
+
+                if (!cashoutButtonVisible) {
+                  console.log(
+                    "Cashout button disappeared. Bet likely failed. Exiting wait..."
+                  );
+                  buttonStillVisible = false; // Break the loop
+                  break;
+                }
+
+                // Small delay before checking again to avoid excessive CPU usage
+                await delay(checkInterval);
+              } catch (error) {
+                console.error(
+                  "Error while checking cashout button visibility:",
+                  error.message
+                );
+                break;
+              }
+            }
+
+            if (buttonStillVisible) {
+              try {
+                // Cash out as the button is still visible after waiting
+                await cashoutButton.click();
+                console.log("Cashout successful!");
+
+                // Trigger reset logic for the next bet sequence
+                onCashout();
+              } catch (error) {
+                console.log("Failed to cash out:", error.message);
+              }
+            } else {
+              console.log("Skipping cashout as button is no longer visible.");
+            }
+
+            isBetting = false; // Reset isBetting flag
+            return; // Exit after processing
           }
 
           // Delay to avoid excessive CPU usage
@@ -312,7 +407,7 @@ async function getNextBet() {
     }
   };
 
-  setInterval(logLatestAppBubbleValue, 4000);
+  setInterval(logLatestAppBubbleValue, 3000); // change this time based on your pc performance
 
   // Wait for 24 hours (86400000 ms)
   await new Promise((resolve) => setTimeout(resolve, 86400000));
